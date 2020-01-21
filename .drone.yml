@@ -1,0 +1,258 @@
+---
+kind: pipeline
+name: "[CODE_SANITIZE]"
+
+platform:
+  os: linux
+  arch: amd64
+
+clone:
+  disable: true
+
+steps:
+- name: "[GIT_CLONE]::[push,pull_request]::[master,"
+  image: alpine/git
+  commands:
+  - git clone -b $DRONE_BRANCH --single-branch --depth 1 https://github.com/muzanella11/mzncom-frontend.git .
+  - git checkout -b $DRONE_COMMIT
+  when:
+    branch:
+      exclude:
+      - master
+      - staging
+      - develop
+      - release/*
+    event:
+    - push
+    - pull_request
+
+- name: "[CODE_SANITIZE]::[push,pull_request]::[mast"
+  image: awhalen/docker-php-composer-node
+  commands:
+  - yarn install
+  - yarn test
+  - composer --version
+  - php -v
+  - composer install --quiet
+  - php vendor/bin/php-cs-fixer fix --dry-run --diff
+  when:
+    branch:
+      exclude:
+      - master
+      - staging
+      - develop
+      - release/*
+    event:
+    - push
+    - pull_request
+
+trigger:
+  branch:
+    exclude:
+    - master
+    - staging
+    - develop
+    - release/*
+  event:
+  - push
+  - pull_request
+
+---
+kind: pipeline
+name: "[WEBAPPS]::[DEV]::[push]::[develop]"
+
+platform:
+  os: linux
+  arch: amd64
+
+clone:
+  disable: true
+
+steps:
+- name: "[GIT_CLONE]::[DEV]::[push]::[develop]"
+  image: alpine/git
+  commands:
+  - git clone -b $DRONE_BRANCH --single-branch --depth 1 https://github.com/muzanella11/mzncom-frontend.git .
+  - git checkout -b $DRONE_COMMIT
+  when:
+    branch:
+    - develop
+    event:
+    - push
+
+- name: "[BUILD_DEPENDENCIES]::[DEV]::[push]::[develop]"
+  image: awhalen/docker-php-composer-node
+  commands:
+  - yarn install --ignore-engines --production=false
+  - yarn build
+  - echo google_credential
+  when:
+    branch:
+    - develop
+    event:
+    - push
+
+- name: "[PUBLISH]::[DEV]::[push]::[develop]"
+  image: plugins/gcr
+  settings:
+    registry: us.gcr.io
+    repo: us.gcr.io/enem-1565866140892/mzncom-image/dev
+    json_key:
+      from_secret: google_credential
+    tags: tag-dev-${DRONE_COMMIT_SHA:0:10}
+  when:
+    branch:
+    - develop
+    event:
+    - push
+
+trigger:
+  branch:
+  - develop
+  event:
+  - push
+
+---
+kind: pipeline
+name: "[WEBAPPS]::[STG]::[push]::[staging]"
+
+platform:
+  os: linux
+  arch: amd64
+
+clone:
+  disable: true
+
+steps:
+- name: "[GIT_CLONE]::[STG]::[push]::[staging]"
+  image: alpine/git
+  commands:
+  - git clone -b $DRONE_BRANCH --single-branch --depth 1 https://github.com/muzanella11/mzncom-frontend.git .
+  - git checkout -b $DRONE_COMMIT
+  when:
+    branch:
+    - staging
+    event:
+    - push
+
+- name: "[BUILD_DEPENDENCIES]::[STG]::[push]::[staging"
+  image: awhalen/docker-php-composer-node
+  commands:
+  - yarn install --ignore-engines --production=false
+  - yarn build
+  - echo google_credential
+  when:
+    branch:
+    - staging
+    event:
+    - push
+
+- name: "[PUBLISH]::[STG]::[push]::[staging]"
+  image: plugins/gcr
+  settings:
+    registry: us.gcr.io
+    repo: us.gcr.io/enem-1565866140892/mzncom-image/stg
+    json_key:
+      from_secret: google_credential
+    tags: tag-stg-${DRONE_COMMIT_SHA:0:10}
+  when:
+    branch:
+    - staging
+    event:
+    - push
+
+trigger:
+  branch:
+  - staging
+  event:
+  - push
+
+---
+kind: pipeline
+name: "[WEBAPPS]::[UAT]::[push]::[release/*]"
+
+platform:
+  os: linux
+  arch: amd64
+
+clone:
+  disable: true
+
+steps:
+- name: "[GIT_CLONE]::[UAT]::[push]::[release/*]"
+  image: alpine/git
+  commands:
+  - git clone -b $DRONE_BRANCH --single-branch --depth 1 https://github.com/muzanella11/mzncom-frontend.git .
+  - git checkout -b $DRONE_COMMIT
+  when:
+    branch:
+    - release/*
+    event:
+    - push
+
+- name: "[BUILD_DEPENDENCIES]::[UAT]::[push]::[release/*"
+  image: awhalen/docker-php-composer-node
+  commands:
+  - yarn install --ignore-engines --production=false
+  - yarn build
+  when:
+    branch:
+    - release/*
+    event:
+    - push
+
+- name: "[PUBLISH]::[UAT]::[push]::[release/*]"
+  image: plugins/gcr
+  settings:
+    registry: us.gcr.io
+    repo: us.gcr.io/enem-1565866140892/mzncom-image/uat
+    json_key:
+      from_secret: google_credential
+    tags: tag-uat-${DRONE_COMMIT_SHA:0:10}
+  when:
+    branch:
+    - release/*
+    event:
+    - push
+
+trigger:
+  branch:
+  - release/*
+  event:
+  - push
+
+---
+kind: pipeline
+name: "[WEBAPPS]::[PRD]::[tag]::[master]"
+
+platform:
+  os: linux
+  arch: amd64
+
+clone:
+  disable: true
+
+steps:
+- name: "[GIT_CLONE]::[PRD]::[tag]::[master]"
+  image: alpine/git
+  commands:
+  - git clone -b master --single-branch --depth 1 https://github.com/muzanella11/mzncom-frontend.git .
+  - git checkout -b $DRONE_COMMIT
+  when:
+    event:
+    - tag
+
+- name: "[BUILD_DEPENDENCIES]::[PRD]::[tag]::[master]"
+  image: awhalen/docker-php-composer-node
+  commands:
+  - yarn install --ignore-engines --production=false
+  - yarn build
+  when:
+    event:
+    - tag
+
+trigger:
+  event:
+  - tag
+
+...

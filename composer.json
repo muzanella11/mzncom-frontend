@@ -1,0 +1,12 @@
+{
+    "name": "muzanella/mzn-com",
+    "require": {
+        "friendsofphp/php-cs-fixer": "^2.16"
+    },
+    "authors": [
+        {
+            "name": "Nurfirliana Muzanella",
+            "email": "muzanella11@gmail.com"
+        }
+    ]
+}
