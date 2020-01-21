@@ -1,0 +1,3 @@
+[submodule "DronePipelineDefinition"]
+	path = DronePipelineDefinition
+	url = https://github.com/muzanella11/DronePipelineDefinition.git

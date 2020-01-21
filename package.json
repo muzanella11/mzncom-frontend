@@ -1,0 +1,17 @@
+{
+  "name": "mzn-com",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/muzanella11/mzncom-frontend.git",
+  "author": "Nurfirliana Muzanella <muzanella11@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo [TEST]::SUCCESS",
+    "build": "echo [BUILD]::OK"
+  },
+  "dependencies": {
+    "@travlrcomlabs/icons": "^0.0.4",
+    "@travlrcomlabs/theme-generator": "^0.0.1",
+    "@travlrcomlabs/uikit": "^0.0.2"
+  }
+}
